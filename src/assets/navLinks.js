@@ -30,15 +30,20 @@ export const sideBarLinks = [
         path:"/dashboard/pending-approvals"
     },
     {
+        title:"Add Money",
+        path:"/dashboard/depositAmount"
+    },
+    {
         title:"Approval List",
         path:"/dashboard/approval-list"
     },
+    
     {
         title:"My Expenses",
         path:"/dashboard/my-expenses"
     },
     {
         title:"Member Profiles",
-        path:"/dashboard/member-profiles"
+        path:"/dashboard"
     }
 ]

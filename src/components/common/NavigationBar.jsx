@@ -8,6 +8,7 @@ import { RiNotification4Line } from "react-icons/ri";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
+import {getMemberProfile} from "../../services/api"
 
 const NavigationBar = (userObj) => {
   const dispatch = useDispatch();
@@ -15,14 +16,11 @@ const NavigationBar = (userObj) => {
   const [isHovered, setIsHovered] = useState(false);
   const { token } = useSelector((state) => state.auth);
   const { user } = userObj;
-  // console.log("USer:", user);
-  // console.log(user.mobile);
+
 
   function handleClick() {
     setIsHovered(!isHovered);
   }
-
- 
 
   function handleLogoutClick() {
     setIsHovered(!isHovered);
@@ -33,6 +31,15 @@ const NavigationBar = (userObj) => {
     setIsHovered(!isHovered);
   }
 
+  useEffect(() => {
+    dispatch(getMemberProfile(token,navigate)); 
+    console.log("User in Navigation Bar:",user);
+    
+  }, []);
+
+
+
+
   return (
     <div className="sticky bg-blue-500 flex h-14 items-center justify-center border-b-[1px] border-b-richblack-700">
       <div className="flex w-10/12 max-w-maxContent items-center justify-between">
@@ -41,12 +48,12 @@ const NavigationBar = (userObj) => {
         </Link>
 
         <nav>
-          <ul className="flex">
+          <ul className="flex relative">
             {NavLinks.map((link, index) => {
               return (
                 <li
                   key={index}
-                  className="px-5 text-white bold decoration-slate-300 font-semibold text-3xl"
+                  className="px-5 text-white bold decoration-slate-300 font-semibold text-3xl pt-3"
                 >
                   {link.title === "Add" ? (
                     <Link to={link?.path}>
@@ -73,25 +80,29 @@ const NavigationBar = (userObj) => {
                           src={user?.image}
                           width={50}
                           height={50}
-                          alt="Website  Logo"
-                          className=" rounded-full"
+                          alt="ProfileLogo"
+                          className="rounded-full"
                           onClick={handleClick}
-                          
                         />
 
                         {isHovered && (
-                          <div className="absolute bg-gray-300 text-black z-[1000] rounded p-2 text-lg w-[100px] mt-1">
+                          <div className="absolute bg-gray-300 text-black z-[1000] rounded p-2 text-lg w-[150px] mt-1">
                             <ul>
                               <li>
                                 <Link
                                   to={"/dashboard/member-profile"}
                                   onClick={handleP}
+                                  className="hover:bg-gray-200 px-2 py-1 rounded"
                                 >
                                   My Profile
                                 </Link>
                               </li>
                               <li>
-                                <Link to={"/"} onClick={handleLogoutClick}>
+                                <Link
+                                  to={"/"}
+                                  onClick={handleLogoutClick}
+                                  className="hover:bg-gray-200 px-2 py-1 rounded"
+                                >
                                   Logout
                                 </Link>
                               </li>
@@ -101,7 +112,7 @@ const NavigationBar = (userObj) => {
                       </div>
                     </Link>
                   ) : (
-                    <Link to={link?.path}>Hi, {user?.role.toUpperCase()}</Link>
+                    <Link to={link?.path}>Hello, {user?.role.toUpperCase()}</Link>
                   )}
                 </li>
               );

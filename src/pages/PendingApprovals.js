@@ -20,8 +20,8 @@ const PendingApprovals = () => {
   return (
     <div>
       <MainSideBar />
-      <div className="z-10 absolute left-[20%] h-full w-auto mt-2">
-        <h1 className="m-4 font-semibold text-xl">Pending Approvals</h1>
+      <div className="-z-10 absolute left-[20%] h-full w-[75%] mt-2 ">
+        <h1 className="m-4 font-semibold text-2xl">Pending Approvals</h1>
         {pendingTrans.length > 0 ? (
           <div className="pl-3">
             {pendingTrans.map((transaction, index) => {
@@ -33,7 +33,7 @@ const PendingApprovals = () => {
             })}
           </div>
         ) : (
-          <p>No Pending Transactions To Show</p>
+          <p className="text-xl p-3">No Pending Transactions To Show</p>
         )}
       </div>
     </div>

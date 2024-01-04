@@ -1,13 +1,13 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { useState } from "react";
 import { login } from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
-import { useSelector } from "react-redux";
-// import { useEffect } from "react";
+
+
 
 const Login = () => {
-  const { token } = useSelector((state) => state.auth);
+ 
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const [formData, setFormData] = useState({
@@ -27,39 +27,27 @@ const Login = () => {
   function handleOnSubmit(e) {
     e.preventDefault();
     console.log("FormData:", formData);
-    // const res = login(formData, navigate).then((result)=>{
-    //     console.log("Result:", result)
-    // }).catch((err) => {
-    //     console.log(err);
-    //     console.error(err);
-    //     process.exit(1);
-    //   });
+   
 
     const res = dispatch(login(formData, navigate));
 
-    console.log("Res:", res);
+    console.log("Res:", res); 
 
     setFormData({
       email: "",
       password: "",
     });
-
-   
   }
 
-  // useEffect(()=>{
-  //   if(token){
-  //     navigate("/dashboard")
-  //   }
-      
-  // },[])
+
   return (
-    <div className="w-[70%] m-auto">
-      <div className="mt-8 bg-gray-300 border-black border-2 p-8 rounded-md">
-        
-          <form onSubmit={handleOnSubmit}>
-            <div>
-              <label>Email:</label>
+    <div className="w-[100vw] m-0 bg-gray-100 h-[100vh] flex items-center justify-center">
+      <div className="bg-white border-2 border-blue-300 p-10 rounded-md shadow-2xl">
+      <h1 className="text-lg font-semibold pb-1 border-blue-300 border-b-2 ">Login Form</h1>
+        <form onSubmit={handleOnSubmit} className="mt-5" >
+          <div className="flex flex-col items-start gap-2">
+            <div className="flex flex-col ">
+              <label className="pl-2">Email</label>
               <input
                 type="email"
                 id="email"
@@ -67,13 +55,13 @@ const Login = () => {
                 placeholder="Email"
                 onChange={handleOnChange}
                 required
-                className="mx-2 border-gray-500 border-2 p-1 rounded-md"
+                className="mx-2 border-gray-300 border-2 p-1 rounded-md"
               />
             </div>
-            <br />
+            
 
-            <div>
-              <label>Password:</label>
+            <div className="flex flex-col">
+              <label className="pl-2">Password</label>
               <input
                 type="password"
                 id="password"
@@ -81,32 +69,35 @@ const Login = () => {
                 placeholder="Password"
                 onChange={handleOnChange}
                 required
-                className="mx-2 border-gray-500 border-2 p-1 rounded-md"
+                className="mx-2 border-gray-300 border-2 p-1 rounded-md"
               />
             </div>
+          </div>
 
-            <br />
+       
+          
+          <div>
+            <button
+              type="submit"
+              className="m-2 bg-blue-500 text-white border-black border-1 px-2 py-1 rounded-md hover:bg-blue-600"
+            >
+              Login
+            </button>
 
-            <div>
+           
+
+
+            <Link to={"/signup"} className="ml-3 text-sm">
+              Not a Registered Member?
               <button
                 type="submit"
-                className="mx-2 border-gray-500 border-2 p-1 rounded-md"
+                className="m-2 bg-blue-500 text-white border-black border-1 px-2 py-1 rounded-md hover:bg-blue-600"
               >
-                Login
+                SignUp
               </button>
-
-              <Link to={"/signup"}>
-                Not a Registered Member?
-                <button
-                  type="submit"
-                  className="mx-2 border-gray-500 border-2 p-1 rounded-md"
-                >
-                  SignUp
-                </button>
-              </Link>
-            </div>
-          </form>
-       
+            </Link>
+          </div>
+        </form>
       </div>
     </div>
   );

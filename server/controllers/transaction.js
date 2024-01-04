@@ -1,43 +1,53 @@
+// const { AccountTree } = require("@mui/icons-material");
 const Account = require("../models/Account");
 const Member = require("../models/Member");
 const Transaction = require("../models/Transaction");
 
 // const nodemailer = require("nodemailer");
 const mailSender = require("../utils/mailSender");
+const MoneyDepositNotification = require("../mail/MoneyDeposit");
+const NewTransactionNotificationAdmin = require("../mail/NewTransactionNotificationAdmin");
+const NewTransactionNotificationInitiator = require("../mail/NewTransactionNotificationInitiator");
+const NewTransactionNotificationMember = require("../mail/NewTransactionNotificationMember");
+const NewTransactionReplyBack  = require("../mail/NewTransactionReplyBack");
+const TransactionRejectMail = require("../mail/TransactionRejectMail");
 
 // Handler To Add A New Transaction
 exports.addTransaction = async (req, res) => {
   try {
     // 1. get the required data from request body and validate
-    const { itemNames, membersInvolved, expense } = req.body;
+    const { itemNames, membersInvolved, expense, purchagedBy } = req.body;
     console.log(
       "Data Entered by Member : ",
       itemNames,
       membersInvolved,
-      expense
+      expense,
+      purchagedBy
     );
 
-    if (!itemNames || !membersInvolved || !expense) {
+    if (!itemNames || !membersInvolved || !expense || !purchagedBy) {
       return res.status(400).json({
         success: false,
-        message: "Carefull! all required fields are there.",
+        message: "Pls! Fill All The Required Fields Carefully.",
       });
     }
 
     // 2. get member reference from token/cookie and authenticate
 
-    const user = req.user;
-    console.log("Printing Member Fetched from req.member.id:", user);
-    const { name } = await Member.findById(user.id);
-    console.log("Name:", name);
-    const { email, role } = user;
-    console.log("Trasaction Created by : ", email, role);
+    const user = await Member.findById(purchagedBy);
+    console.log("Printing :", user);
+    // const { name } = await Member.findById(user.id);
+    // console.log("Name:", name);
+    // const { email, role } = user;
+    // console.log("Trasaction Created by : ", email, role);
 
     // 3. create Transaction Instance with the provided data
+    const newItems = itemNames.split(" ");
+    const newMembers = membersInvolved;
     const newTransaction = await Transaction.create({
       createdBy: user.id,
-      itemNames,
-      membersInvolved,
+      itemNames: newItems,
+      membersInvolved: newMembers,
       expense,
     });
 
@@ -47,26 +57,21 @@ exports.addTransaction = async (req, res) => {
     const admin_instance = await Member.findOne({ role: "admin" });
     console.log("Admin Details:", admin_instance);
     const admin_email = admin_instance.email;
-    console.log("User Email:", email);
+    // console.log("User Email:", email);
     // Sending mail to the admin
     try {
       mailSender(
         admin_email,
-        `New Transaction added by ${name}`,
-        `New Transaction Details:
-         Add By: ${name}
-         Items Purchased: ${itemNames}
-          Members Included: ${membersInvolved}
-          Purchase Amount: ₹${expense}`
+        `New Transaction added by ${user.name}`,
+        NewTransactionNotificationAdmin(user.name, itemNames, membersInvolved, expense)
+       
       );
 
       mailSender(
-        email,
+        user.email,
         "Request Sent To The Admin Successfully",
-        `We have sent a successful request to the admin
-      Your transaction get approved once admin finds it valid.
-      Please Stay Updated!
-      You will get a mail once your transaction  get approved.`
+        NewTransactionNotificationInitiator(user.name, itemNames, membersInvolved, expense)
+       
       );
 
       return res.status(200).json({
@@ -153,14 +158,14 @@ exports.getAllApprovedTransaction = async (req, res) => {
   }
 };
 
-
 // Utility Function to insert new transaction to member account
 async function updateMembersWithTransaction(members, transactionId) {
   try {
-    const memberIds = members.map((member) => member._id);
+    // const memberIds = members.map((member) => member._id);
 
-    const updatedMembers = await Member.find({ _id: { $in: memberIds } });
-    const accountIDs = members.map((member) => member.memberAccount._id);
+    const updatedMembers = await Member.find({ name: { $in: members } });
+    console.log("Updated members:",updatedMembers);
+    const accountIDs = updatedMembers.map((member) => member.memberAccount._id);
     const memberAccounts = await Account.find({ _id: { $in: accountIDs } });
     const updatePromises = memberAccounts.map(async (memberAccount) => {
       if (memberAccount) {
@@ -191,7 +196,7 @@ exports.approve = async (req, res) => {
 
     let transaction2 = await Transaction.findById(_id);
 
-    const { expense } = transaction2;
+    const {membersInvolved, itemNames, expense } = transaction2;
 
     //  Change it's status from pending to approved
 
@@ -202,17 +207,19 @@ exports.approve = async (req, res) => {
     );
 
     // Get all the members involved in the transaction
-    const members = await Member.find();
-    // console.log("members Fetched: ", members);
+    const members = updatedTransaction.membersInvolved;
+    const updatedMembers = await Member.find({ name: { $in: members } });
+    console.log("members Fetched: ", updatedMembers);
 
     // Function to insert the approved transaction to the all involved member's transactions array
     updateMembersWithTransaction(members, transaction2);
 
     // Distribute the amount between all the members involved in the particular transaction and update account balance of each member
 
-    const partOfMember = expense / members.length;
-    // console.log("Part:", partOfMember);
-    members.forEach(async (member) => {
+    const random = expense / members.length;
+    const partOfMember = Math.ceil(random) ;
+    console.log("Part:", partOfMember);
+    updatedMembers.forEach(async (member) => {
       try {
         // Fetch the member document from the database
         const foundMember = await Member.findById(member._id)
@@ -228,10 +235,15 @@ exports.approve = async (req, res) => {
         // console.log("MemberAccount: ", foundMember.memberAccount);
         let { memberAccount } = foundMember;
 
-        await Account.findByIdAndUpdate(memberAccount._id, {
-          balance: memberAccount.balance - partOfMember,
+      const updatedAccount =  await Account.findByIdAndUpdate(memberAccount._id, {
           expense: memberAccount.expense + partOfMember,
+        },{new:true
         });
+
+        updatedAccount.balance = updatedAccount.deposit - updatedAccount.expense;
+       await updatedAccount.save();
+
+        
       } catch (error) {
         console.error(`Error updating member ${member._id}:`, error);
       }
@@ -245,16 +257,16 @@ exports.approve = async (req, res) => {
     // console.log("Initialtor Email: ", initiator.email);
     const result = mailSender(
       initiator.email,
-      "Congrats! Your Transaction got approved by Admin",
-      `Your Part: ${partOfMember}`
+      "Congrats! Your Transaction Got Approved By Admin",
+      NewTransactionReplyBack(initiator.name , itemNames, membersInvolved, expense, partOfMember)
     );
 
-    members.map(function (member) {
+    updatedMembers.map(function (member) {
       if (member.email !== initiator.email) {
         const result2 = mailSender(
           member.email,
-          `Your Were Mentioned In A New Transaction Added By ${initiator.name}`,
-          `Your Part: ${partOfMember}`
+          `New Expense Added By ${initiator.name}`,
+          NewTransactionNotificationMember(initiator.name, member.name,membersInvolved, itemNames, expense, partOfMember )
         );
       }
     });
@@ -269,12 +281,11 @@ exports.approve = async (req, res) => {
     return res.status(500).json({
       success: true,
       message:
-        "Error occured while approving the transaction. please try again later.",
+        "Error occured while approving the transaction. Please try again later.",
     });
   }
 };
 
- 
 // Handler To reject a transaction
 exports.reject = async (req, res) => {
   try {
@@ -300,8 +311,8 @@ exports.reject = async (req, res) => {
     // 4. Send a mail to the initiator tellig him about rejection of the transaction
     const result = mailSender(
       initiator.email,
-      "Opps! Your Transaction Got Rejected By Admin.",
-      "Sorry to say but your transaction got rejected by your admin. You may contact admin for detailed explanation. Thank You!"
+      "OOPS! Your Transaction Got Rejected By Admin.",
+      TransactionRejectMail(initiator.name)
     );
     // 5. return response
     return res.status(200).json({
@@ -322,20 +333,20 @@ exports.getAccountDetails = async (req, res) => {
   try {
     const userId = req.user.id;
     const user = await Member.findOne({ id: userId._id })
-    .populate({
-      path: "memberAccount",
-      populate: {
-        path: "transactions",
-      },
-    })
-    .exec();
-
-
+      .populate({
+        path: "memberAccount",
+        populate: {
+          path: "transactions",
+        },
+      })
+      .exec();
 
     const account = user.memberAccount._id;
     // console.log("Account:", account);
 
-    const accountDetails = await Account.findById(account._id).populate(["accountHolder", "transactions"]).exec();
+    const accountDetails = await Account.findById(account._id)
+      .populate(["accountHolder", "transactions"])
+      .exec();
 
     return res.status(200).json({
       success: true,
@@ -376,3 +387,66 @@ exports.getPendingTransactions = async (req, res) => {
     });
   }
 };
+
+exports.depositAmount = async (req, res) => {
+  try {
+    // Get member instance and deposit amount
+    const { accountID, amount } = req.body;
+    const account = await Account.findByIdAndUpdate(accountID);
+
+    // account.balance += Number(amount);
+    account.deposit += Number(amount);
+    await account.save();
+    account.balance = account.deposit - account.expense;
+    await account.save();
+
+    const user = await Member.findById(account.accountHolder._id);
+    // console.log(user);
+
+    mailSender(
+      user.email,
+      "Money Deposited",
+      MoneyDepositNotification(user.name,account.balance, amount)
+    );
+    // Return response
+    console.log("Account:", account);
+    return res.status(200).json({
+      success: true,
+      message: "Amount Added Successfully",
+      account,
+    });
+  } catch (error) {
+    console.log("Err:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Error Occured While Depositing Amount In Account",
+    });
+  }
+};
+
+exports.resetAccounts = async (req, res)=>{
+  try{
+     const {accountID} = req.body;
+
+     await Account.findByIdAndUpdate({_id:accountID},{
+      deposit:0,
+      expense:0,
+      balance:0
+     })
+
+
+     return res.status(200).json({
+      success:true,
+      message:"Account Reset Success"
+     })
+
+     
+
+  }catch(error){
+    console.log("Error:",error)
+    return res.status(500).json({
+      success:false,
+      message:"Error Occured While Resetting Account"
+    })
+  }
+}

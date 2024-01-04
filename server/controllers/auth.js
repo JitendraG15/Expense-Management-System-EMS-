@@ -2,9 +2,10 @@ const Member = require("../models/Member");
 const Account = require("../models/Account");
 const bcrypt = require("bcrypt");
 const otpGenerator = require("otp-generator");
-// const nodemailer = require("nodemailer");
+const otpTemplate = require("../mail/OtpVerfication");
 const mailSender = require("../utils/mailSender");
 const jwt = require("jsonwebtoken");
+const signupWelcome = require("../mail/SignupWelcome");
 require("dotenv").config();
 
 // Handler For signup
@@ -62,8 +63,8 @@ exports.signup = async (req, res) => {
     // Sending Mail To new user
     const result = mailSender(
       email,
-      "Congratulations! We welcome you as a new Member",
-      `Thank You for signing with us. You are now a member.`
+      "Congratulations! You Are Now A Registered Member",
+      signupWelcome(name,role)
     );
 
     return res.status(200).json({
@@ -103,7 +104,16 @@ exports.login = async (req, res) => {
         },
       })
       .exec();
-    // console.log(user);
+ 
+
+      const users = await Member.find()
+      .populate({
+        path: "memberAccount",
+        populate: {
+          path: "transactions",
+        },
+      })
+      .exec();
 
     if (!user) {
       return res.status(401).json({
@@ -136,6 +146,7 @@ exports.login = async (req, res) => {
         success: true,
         token,
         user,
+        users,
         message: `User Login Success`,
       });
     } else {
@@ -173,7 +184,7 @@ exports.sendOtp = async (req, res) => {
     const result = mailSender(
       email,
       "Verify OTP",
-      `Your one time password is ${otp}`
+      otpTemplate(otp)
     );
     // console.log("Result:", result);
     if (result) {

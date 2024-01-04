@@ -2,6 +2,7 @@ import { createSlice } from "@reduxjs/toolkit";
 
 
 const initialState = {
+  balance:0,
   transactions:[],
   approvedTransaction:[]
 };
@@ -16,10 +17,13 @@ const transactionSlice = createSlice({
     },
     setApprovedTransaction(state, action){
       state.approvedTransaction = action.payload
+    },
+    setBalance(state, action){
+        state.balance = action.payload;
     }
   },
 });
 
-export const { setTransactions, setApprovedTransaction } = transactionSlice.actions;
+export const { setTransactions, setApprovedTransaction,setBalance } = transactionSlice.actions;
 
 export default transactionSlice.reducer;

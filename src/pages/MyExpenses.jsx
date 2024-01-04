@@ -24,16 +24,16 @@ console.log("Transactions2:",transactions);
   return (
     <div>
       <MainSideBar />
-      <div className="z-10 absolute left-[5%]  mt-2 w-full">
-        <div className="w-[70%] m-auto bg-gray-200 border-black border-2 px-10 p-5">
-          <h1 className="text-black font-bold text-xl">My Expenses</h1>
+      <div className="-z-10 absolute left-[5%]  mt-2 w-full">
+        <div className="w-[70%] m-auto">
+          <h1 className="font-semibold text-2xl p-2">My Expenses</h1>
           <div>
                {
-                transactions.map((transaction, index)=>(
+               transactions.length > 0 ? transactions.map((transaction, index)=>(
                   <>
                    <Expense transaction={transaction} key={index}/>
                   </>
-                ))
+                )) : <p className="text-xl p-3">No Expenses To Show</p>
                } 
           </div>
         </div>

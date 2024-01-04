@@ -18,17 +18,17 @@ const MemberProfiles = () => {
   
   
   useEffect(() => {
-    dispatch(getAllProfiles(token,navigate));
-    console.log("Users:",users);
+    dispatch(getAllProfiles(token,navigate)); 
+    // console.log("Users:",users);
     
   }, []);
 
   
   return (
-    <div className='relative '>
+    <div className='relative -z-10 '>
       <MainSideBar />
-      <div className='z-0 absolute left-[20%]  w-[75%] mt-4  text-center border-2 border-red-100 p-4 bg-gray-200'>
-       <h1 className='text-3xl mb-4'>Member Profiles</h1> 
+      <div className='z-0 absolute left-[20%]  w-[75%] mt-4 text-center '>
+       <h1 className='text-2xl mb-4 ml-5 font-semibold'>Member Profiles</h1> 
         {
           users.map((user, id)=>{
             return <div>

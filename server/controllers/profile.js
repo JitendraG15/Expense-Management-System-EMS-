@@ -5,19 +5,20 @@ exports.getMemberProfile = async (req, res) => {
   try {
     // get member id from req.user.id
     const userId = req.user.id;
-    const user = await Member.findOne({ id: userId._id })
+    const user = await Member.findById(userId)
       .populate({
-        path: "memberAccount",
+        path: "memberAccount", 
         populate: {
           path: "transactions",
         },
       })
       .exec();
-    // console.log(user);
+    console.log("User in getMemberProfileHandler:",user);
     return res.status(200).json({
       success: true,
       user,
       message: "User profile fetched successfully",
+
     });
   } catch (err) {
     console.error(err);

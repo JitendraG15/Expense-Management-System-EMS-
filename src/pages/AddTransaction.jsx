@@ -1,18 +1,24 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { useState } from "react";
 import { addTransaction } from "../services/api";
 import { Link, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { useSelector } from "react-redux";
+import { getAllProfiles } from "../services/api";
 
 const AddTransaction = () => {
   const { token } = useSelector((state) => state.auth);
+  const { users } = useSelector((state) => state.profile);
+  // const [members, setMembers] = useState([]);
+  const [selectedItems, setSelectedItems] = useState([]);
   const navigate = useNavigate();
   const dispatch = useDispatch();
+
   const [formData, setFormData] = useState({
     itemNames: "",
-    membersInvolved: "",
+    membersInvolved: [],
     expense: "",
+    purchagedBy: "",
   });
 
   function handleOnChange(e) {
@@ -22,34 +28,66 @@ const AddTransaction = () => {
       ...formData,
       [name]: value,
     });
+
+    // const arr = formData.itemNames[0].split(" ");
+
+    // setFormData({
+    //   ...formData,
+    //   itemNa  :arr
+    // })
   }
+
+  function handleCheckboxChange(event) {
+    const itemId = event.target.value;
+    setSelectedItems((prevSelectedItems) => {
+      if (prevSelectedItems.includes(itemId)) {
+        return prevSelectedItems.filter((id) => id !== itemId);
+      } else {
+        return [...prevSelectedItems, itemId];
+      }
+    });
+
+    console.log("s", selectedItems);
+  }
+
+ 
 
   function handleOnSubmit(e) {
     e.preventDefault();
-    console.log("FormData:", formData);
 
-    dispatch(addTransaction(formData, token, navigate));
+    const updatedFormData = { ...formData, membersInvolved: selectedItems };
+    console.log("Updated Data:",updatedFormData);
+   
+    dispatch(addTransaction(updatedFormData, token, navigate));
 
-    // console.log("Res:", res);
-
+    
+    // window.location.reload();
+    setSelectedItems([]);
     setFormData({
       itemNames: "",
-      membersInvolved: "",
+      membersInvolved: [],
       expense: "",
+      purchagedBy: "",
     });
   }
+
+  useEffect(()=>{
+       dispatch(getAllProfiles(token,navigate));
+  },[])
   return (
-    <div className="absolute left-56 top-7 z-10">
-      <div className="mt-8 bg-gray-300 border-black border-2 p-8 rounded-md">
+    <div className="absolute left-[35%] top-[10%] z-10">
+      <div className="mt-8  border-2 p-4 rounded-md">
+        <h1 className="text-2xl  font-semibold pb-5">Add New Transaction</h1>
         <form onSubmit={handleOnSubmit}>
           <div>
-            <label>itemNames:</label>
+            <label className="text-lg font-semibold">Items Purchased:</label>
             <input
               type="text"
               id="itemNames"
               name="itemNames"
               placeholder="Items"
               onChange={handleOnChange}
+              value={formData.itemNames}
               required
               className="mx-2 border-gray-500 border-2 p-1 rounded-md"
             />
@@ -57,26 +95,48 @@ const AddTransaction = () => {
           <br />
 
           <div>
-            <label>membersInvolved:</label>
-            <input
-              type="text"
-              id="membersInvolved"
-              name="membersInvolved"
-              placeholder="membersInvolved"
+            <label className="text-lg font-semibold">Purchaged By:</label>
+            <select
+              name="purchagedBy"
+              value={formData.purchagedBy}
               onChange={handleOnChange}
-              required
-              className="mx-2 border-gray-500 border-2 p-1 rounded-md"
-            />
+            >
+              <option value="">Select an option</option>
+              {users.map((user, index) => (
+                <option value={user._id}>{user.name}</option>
+              ))}
+            </select>
+          </div>
+          <br />
+
+          <div>
+            <label className="text-lg font-semibold">Members:</label>
+            {users
+              ? users.map((item) => (
+                  <div key={item._id}>
+                    <input
+                      type="checkbox"
+                      id={item.id}
+                      name="membersInvolved"
+                      value={item.name}
+                      checked={selectedItems.includes(item.name)}
+                      onChange={handleCheckboxChange}
+                    />
+                    <label htmlFor={item.id}>{item.name}</label>
+                  </div>
+                ))
+              : null}
           </div>
 
           <br />
 
           <div>
-            <label>expense:</label>
+            <label className="text-lg font-semibold">Expense:</label>
             <input
               type="text"
               id="expense"
               name="expense"
+              value={formData.expense}
               placeholder="expense"
               onChange={handleOnChange}
               required
@@ -89,7 +149,7 @@ const AddTransaction = () => {
           <div>
             <button
               type="submit"
-              className="mx-2 border-gray-500 border-2 p-1 rounded-md"
+              className="mx-2 border-gray-500 border-2 p-1 rounded-md hover:bg-blue-500 hover:text-white hover:font-semibold"
             >
               Add Transaction
             </button>

@@ -2,7 +2,11 @@ import toast from "react-hot-toast";
 import axios from "axios";
 import { setToken, setUser } from "../slices/AuthSlice";
 import { setUsers, setPendingTrans } from "../slices/ProfileSlice";
-import {setTransactions, setApprovedTransaction} from "../slices/TransactionSlice";
+import {
+  setTransactions,
+  setApprovedTransaction,
+  setBalance,
+} from "../slices/TransactionSlice";
 // import { useState } from "react";
 
 const API_URL = "http://localhost:4000/app/v1";
@@ -16,28 +20,7 @@ export const demo = async () => {
   }
 };
 
-export const registerUser = async (formData, navigate) => {
-  try {
-    const { firstName, lastName, email, phoneNumber, universityName, course } =
-      formData;
-    const response = await axios.post(`${API_URL}/register`, {
-      firstName,
-      lastName,
-      email,
-      phoneNumber,
-      universityName,
-      course,
-    });
-    if (response) {
-      toast.success("Signup Success.");
-      navigate("/registrationSuccess");
-    }
 
-    return response.data;
-  } catch (error) {
-    console.error(error);
-  }
-};
 
 export const signup = async (formData, navigate) => {
   try {
@@ -83,17 +66,19 @@ export const signup = async (formData, navigate) => {
 export function login(formData, navigate) {
   return async (dispatch) => {
     const { email, password } = formData;
+    console.log("email:", email, "password:", password);
     try {
       const response = await axios.post(`${API_URL}/auth/login`, {
         email,
-
-        password,
+        password
       });
       dispatch(setToken(response.data.token));
       dispatch(setUser(response.data.user));
+      dispatch(setUsers(response.data.users));
 
       localStorage.setItem("token", JSON.stringify(response.data.token));
       localStorage.setItem("user", JSON.stringify(response.data.user));
+      localStorage.setItem("users", JSON.stringify(response.data.users));
       if (response) {
         console.log("Response:", response);
         toast.success("Login Success.");
@@ -103,15 +88,16 @@ export function login(formData, navigate) {
       return response.data;
     } catch (error) {
       console.log("LOGIN API ERROR............", error);
-      toast.error(error.response.data.message)
+      toast.error(error.response.data.message);
     }
   };
 }
 
-export function addTransaction(formData, token, navigate) {
+export function addTransaction(updatedFormData, token, navigate) {
   return async (dispatch) => {
-    const { itemNames, membersInvolved, expense } = formData;
-    console.log("Token:", token);
+    const { itemNames, membersInvolved, expense, purchagedBy } =
+      updatedFormData;
+    // console.log("Items:",itemNames,"Members:", membersInvolved, "Expense:",expense);
     try {
       const response = await axios.post(
         `${API_URL}/transaction/addTransaction`,
@@ -119,6 +105,7 @@ export function addTransaction(formData, token, navigate) {
           itemNames,
           membersInvolved,
           expense,
+          purchagedBy,
         },
         {
           headers: {
@@ -136,8 +123,62 @@ export function addTransaction(formData, token, navigate) {
 
       return response.data;
     } catch (error) {
-      console.log("LOGIN API ERROR............", error);
+      console.log("Error Adding Transaction:", error);
       toast.error("Error occured while adding transaction");
+    }
+  };
+}
+
+export function addMoney(formData, token, navigate) {
+  return async (dispatch) => {
+    try {
+      const response = await axios.post(
+        `${API_URL}/transaction/depositAmount`,
+        formData,
+        {
+          headers: {
+            "Content-Type": "application/json",
+            Authorisation: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (response) {
+        console.log("Response:", response);
+        toast.success("Amount Deposited Successfully");
+        // navigate("/dashboard");
+      }
+
+      return response.data;
+    } catch (error) {
+      // console.log("LOGIN API ERROR............", error);
+      toast.error("Error occured while adding Money");
+    }
+  };
+}
+
+export function getMemberProfile(token, navigate) {
+  return async (dispatch) => {
+    try {
+      const response = await axios.get(`${API_URL}/profile/getMemberProfile`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorisation: `Bearer ${token}`,
+        }, 
+      });
+
+      if (response) {
+        console.log("Response:", response.data.user);
+        dispatch(setUser(response.data.user));
+
+        // toast.success("Member Profile fetched Successfully");
+        // navigate("/dashboard");
+      }
+
+      return response.data;
+    } catch (err) {
+      console.log("Err:", err);
+      toast.error("Error occured while Fetching Member Profile");
     }
   };
 }
@@ -156,7 +197,7 @@ export function getAllProfiles(token, navigate) {
         console.log("Response:", response.data.users);
         dispatch(setUsers(response.data.users));
 
-        toast.success("Members data fetched Successfully");
+        // toast.success("Members data fetched Successfully");
         // navigate("/dashboard");
       }
 
@@ -215,7 +256,7 @@ export function approve(data, token, navigate) {
 
       if (response) {
         toast.success("Approval Success.");
-        // navigate("/dashboard");
+        dispatch(setBalance(response.data));
       }
 
       return response.data;
@@ -259,7 +300,7 @@ export function getMyTransactions(token, navigate) {
     try {
       const response = await axios.get(
         `${API_URL}/transaction/getAllTransaction`,
-      
+
         {
           headers: {
             "Content-Type": "application/json",
@@ -271,7 +312,7 @@ export function getMyTransactions(token, navigate) {
       if (response) {
         toast.success("Transactions Fetched Successfully.");
       }
-      console.log("Response.data:",response.data.transactions);
+      console.log("Response.data:", response.data.transactions);
       dispatch(setTransactions(response.data.transactions));
       return response.data.transactions;
     } catch (err) {
@@ -280,17 +321,16 @@ export function getMyTransactions(token, navigate) {
     }
   };
 }
- 
+
 // getAllApprovedTransaction
 
 export function getAllApprovedTransaction(token, navigate) {
-  
   return async (dispatch) => {
     let approvedTransactions;
     try {
       const response = await axios.get(
         `${API_URL}/transaction/getAllTransaction`,
-      
+
         {
           headers: {
             "Content-Type": "application/json",
@@ -303,7 +343,7 @@ export function getAllApprovedTransaction(token, navigate) {
         toast.success("All Approved Transactions Fetched Successfully.");
         dispatch(setApprovedTransaction(response.data.transactions));
       }
-     
+
       return response.data;
     } catch (err) {
       console.log("Err:", err);
@@ -314,22 +354,22 @@ export function getAllApprovedTransaction(token, navigate) {
 
 export function logout(token, navigate) {
   return (dispatch) => {
-    if(!token) {
+    if (!token) {
       toast.error("Please Login Fisrt");
       return;
     }
     dispatch(setToken(null));
     dispatch(setUser(null));
-    // dispatch(setUsers([])); 
-    // dispatch(setTransactions([]))
-    // dispatch(setPendingTrans([]));
-    // dispatch(setApprovedTransaction([]));
+    dispatch(setUsers([]));
+    dispatch(setTransactions([]))
+    dispatch(setPendingTrans([]));
+    dispatch(setApprovedTransaction([]));
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    // localStorage.removeItem("users");
-    // localStorage.removeItem("pendingTrans");
-    // localStorage.removeItem("transactions");
-    // localStorage.removeItem("approvedTransaction");
+    localStorage.removeItem("users");
+    localStorage.removeItem("pendingTrans");
+    localStorage.removeItem("transactions");
+    localStorage.removeItem("approvedTransaction");
     toast.success("Logged Out");
     navigate("/");
   };

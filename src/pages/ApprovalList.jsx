@@ -1,7 +1,7 @@
 import React from 'react'
 import MainSideBar from '../components/common/MainSideBar';
 import { useSelector } from 'react-redux';
-import { useState } from 'react';
+// import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch } from 'react-redux';
 import { useEffect } from 'react';
@@ -24,15 +24,15 @@ const ApprovalList = () => {
   return (
     <div>
     <MainSideBar/>
-    <div className='absolute left-[20%] h-full w-auto mt-2 z-10'>
-        <h1>Approved Transactions</h1>
-        <div className='w-[100%] m-auto bg-gray-200 border-2 border-black'>
+    <div className='absolute left-[20%] h-full w-[70%] mt-2 z-10'>
+        <h1 className='text-2xl p-2 font-semibold'>Approved Transactions</h1>
+        <div className='w-[100%] m-auto'>
             {
-              approvedTransaction.map((transaction,index)=>(
+             approvedTransaction.length > 0?( approvedTransaction.map((transaction,index)=>(
                 <>
                 <Expense transaction={transaction} key={index}/>
                 </>
-              ))
+              )) ):(<p className="text-xl p-3">No Approved Transactions To Show</p>)
             }
         </div>
     </div>

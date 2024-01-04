@@ -12,33 +12,54 @@ import PendingApprovals from "./pages/PendingApprovals";
 import SignUp from "./pages/SignUp";
 import { useSelector } from "react-redux";
 import MemberProfile from "./pages/MemberProfile";
+import AddMoney from "./pages/AddMoney";
 
 const App = () => {
   const { user } = useSelector((state) => state.auth);
+  const { users } = useSelector((state) => state.profile);
   return (
     <div>
-      <div>
-        {/* <NavigationBar user={user} /> */}
+    <div className="scrolling-text text-white  font-semibold text-2xl">
+     Desktop Mode Only!
+    </div>
+      <div className="mobile-only font-roboto">
+        <div>
+          {/* <NavigationBar user={user} /> */}
 
-        <Routes>
-          <Route path="/" element={<Login />} />
-          <Route  element={<Dashboard/>} path="/dashboard">
-            <Route element={<MemberProfiles />} path="/dashboard/member-profiles" />
-            <Route element={<MemberProfile/>} path="/dashboard/member-profile" />
-            <Route element={<MyExpenses />} path="/dashboard/my-expenses" />
-            <Route element={<ApprovalList />} path="/dashboard/approval-list" />
-            <Route
-              element={<PendingApprovals />}
-              path="/dashboard/pending-approvals"
-            />
-            <Route element={<AddTransaction />} path="/dashboard/add-new-transaction" />
-          </Route>
+          <Routes>
+            <Route path="/" element={<Login />} />
+            <Route element={<Dashboard />} path="/dashboard">
+              <Route element={<MemberProfiles />} index />
+              <Route
+                element={<MemberProfile />}
+                path="/dashboard/member-profile"
+              />
+              <Route element={<MyExpenses />} path="/dashboard/my-expenses" />
+              <Route
+                element={<ApprovalList />}
+                path="/dashboard/approval-list"
+              />
+              <Route
+                element={<PendingApprovals />}
+                path="/dashboard/pending-approvals"
+              />
+              <Route
+                element={<AddTransaction />}
+                path="/dashboard/add-new-transaction"
+              />
 
-          <Route element={<SignUp />} path="/signup" />
+              <Route
+                element={<AddMoney users={users} />}
+                path="/dashboard/depositAmount"
+              />
+            </Route>
 
-          <Route element={<SuccessSignup />} path="/signup-success" />
-          <Route path="*" element={<div>404 Not Found</div>} />
-        </Routes>
+            <Route element={<SignUp />} path="/signup" />
+
+            <Route element={<SuccessSignup />} path="/signup-success" />
+            <Route path="*" element={<div>404 Not Found</div>} />
+          </Routes>
+        </div>
       </div>
     </div>
   );

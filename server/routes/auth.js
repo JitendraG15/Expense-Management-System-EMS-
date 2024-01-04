@@ -7,7 +7,7 @@ const {auth} = require("../middlewares/auth");
 router.post("/signup", signup);
 
 router.post("/login",login);
-router.post("/sendOtp",auth,sendOtp);
+router.post("/sendOtp",sendOtp);
 
 module.exports = router;
 

@@ -27,6 +27,10 @@ app.use("/app/v1/auth", auth);
 app.use("/app/v1/transaction", transaction);
 app.use("/app/v1/profile", profile);
 
+app.use("/",(req,res)=>{
+	return res.send("Welcome To EMS Server")
+})
+
 app.listen(port, () => {
   console.log(`Server Started at port no ${port}`);
 });

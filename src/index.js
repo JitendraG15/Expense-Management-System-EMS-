@@ -7,7 +7,7 @@ import rootReducer from "./reducer";
 import { configureStore } from "@reduxjs/toolkit";
 import { Toaster } from "react-hot-toast";
 import { Provider } from "react-redux";
-
+ 
 const store = configureStore({
   reducer: rootReducer,
 });

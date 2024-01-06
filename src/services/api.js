@@ -9,7 +9,7 @@ import {
 } from "../slices/TransactionSlice";
 // import { useState } from "react";
 
-const API_URL = "http://localhost:4000/app/v1";
+const API_URL = "https://ems-blue.vercel.app/";
 // const dispatch = useDispatch();
 export const demo = async () => {
   try {
